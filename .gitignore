@@ -38,3 +38,6 @@ docs/site/
 docs/olddocs/
 docs/mkdocs/site/
 scripts/archives/
+
+# Packer output (OVA/OVF files)
+packer/vsphere/output/
