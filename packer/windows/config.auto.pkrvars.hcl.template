@@ -1,0 +1,37 @@
+# Unified Packer config for vSphere and Proxmox.
+# Copy to config.auto.pkrvars.hcl and edit values for your environment.
+
+# Enable one provider in a var file (see vars/*/*.pkrvars.hcl).
+# These defaults keep both providers disabled until you select one.
+enable_vsphere = false
+enable_proxmox = false
+
+# WinRM credentials used by both providers
+winrm_username = "vagrant"
+winrm_password = "vagrant"
+
+# ---------------------------------------------------------------------------
+# vSphere connection settings
+# ---------------------------------------------------------------------------
+vsphere_server     = "192.168.1.100"
+vsphere_username   = "root"
+vsphere_password   = "CHANGEME"
+vsphere_insecure   = true
+vsphere_datacenter = ""
+vsphere_cluster    = ""
+vsphere_host       = "192.168.1.100"
+vsphere_datastore  = "datastore1"
+vsphere_network    = "VM Network"
+vsphere_folder     = ""
+
+# ---------------------------------------------------------------------------
+# Proxmox connection settings
+# ---------------------------------------------------------------------------
+proxmox_url             = "https://192.168.1.1:8006/api2/json"
+proxmox_username        = "infra_as_code@pve"
+proxmox_password        = "CHANGEME"
+proxmox_skip_tls_verify = true
+proxmox_node            = "proxmox-goad"
+proxmox_pool            = "Templates"
+proxmox_iso_storage     = "local"
+proxmox_vm_storage      = "local-lvm"

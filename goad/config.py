@@ -27,7 +27,7 @@ class Config:
         config.set('default', '; lab: GOAD / GOAD-Light / MINILAB / NHA / SCCM')
         config.set('default', 'lab', 'GOAD')
 
-        config.set('default', '; provider : virtualbox / vmware / vmware_esxi / aws / azure / proxmox')
+        config.set('default', '; provider : virtualbox / vmware / vmware_esxi / vmware_vcenter / aws / azure / proxmox / aliyun')
         config.set('default', 'provider', 'vmware')
 
         config.set('default', "; provisioner method : local / remote")
@@ -42,6 +42,24 @@ class Config:
 
         config.add_section('azure')
         config.set('azure', 'az_location', 'westeurope')
+
+        config.add_section('aliyun')
+        config.set('aliyun', 'aliyun_region', 'ap-southeast-1')
+        config.set('aliyun', 'aliyun_zone', 'ap-southeast-1a')
+        config.set('aliyun', 'aliyun_vpc_cidr', '10.0.0.0/16')
+        config.set('aliyun', 'aliyun_vswitch_cidr', '10.0.1.0/24')
+        config.set('aliyun', 'aliyun_nat_gateway_enabled', 'true')
+        config.set('aliyun', 'aliyun_tag_prefix', 'GOAD')
+        config.set('aliyun', 'aliyun_image_use_custom_first', 'true')
+        config.set('aliyun', '; prefer packer images; fall back to public image ids if empty')
+        config.set('aliyun', 'aliyun_windows_custom_image_id', '')
+        config.set('aliyun', 'aliyun_windows_public_image_id', '')
+        config.set('aliyun', 'aliyun_linux_custom_image_id', '')
+        config.set('aliyun', 'aliyun_linux_public_image_id', '')
+        config.set('aliyun', '; use public image name regex if image ids are empty')
+        config.set('aliyun', 'aliyun_image_owner', 'system')
+        config.set('aliyun', 'aliyun_windows_image_name_regex', 'win2019_1809_x64_dtc_zh-cn_40G_alibase_.*')
+        config.set('aliyun', 'aliyun_linux_image_name_regex', 'ubuntu_22_04')
 
         config.add_section('proxmox')
         config.set('proxmox', 'pm_api_url', 'https://192.168.1.1:8006/api2/json')
@@ -72,6 +90,22 @@ class Config:
         config.set('vmware_esxi', 'esxi_net_nat', 'VM Network')
         config.set('vmware_esxi', 'esxi_net_domain', 'GOAD-LAN')
         config.set('vmware_esxi', 'esxi_datastore', 'datastore1')
+        config.set('vmware_esxi', 'esxi_use_router', 'no')
+        config.set('vmware_esxi', 'esxi_router_box', 'openwrt-24.10.5-x86-64-esxi')
+        config.set('vmware_esxi', 'esxi_router_box_version', '')
+        config.set('vmware_esxi', 'esxi_router_ip_suffix', '1')
+        config.set('vmware_esxi', 'esxi_vagrant_on_jumpbox', 'no')
+
+        config.add_section('vmware_vcenter')
+        config.set('vmware_vcenter', 'vcenter_hostname', 'vcenter.example.com')
+        config.set('vmware_vcenter', 'vcenter_username', 'administrator@vsphere.local')
+        config.set('vmware_vcenter', 'vcenter_password', 'password')
+        config.set('vmware_vcenter', 'vcenter_datacenter', 'Datacenter')
+        config.set('vmware_vcenter', 'vcenter_cluster', 'Cluster')
+        config.set('vmware_vcenter', 'vcenter_datastore', 'datastore1')
+        config.set('vmware_vcenter', 'vcenter_net_nat', 'VM Network')
+        config.set('vmware_vcenter', 'vcenter_net_domain', 'GOAD-LAN')
+        config.set('vmware_vcenter', 'vcenter_insecure', 'true')
         config.write(cfgfile)
         cfgfile.close()
 
@@ -98,6 +132,8 @@ class Config:
                         Dependencies.vmware_enabled = False
                     elif disable_dependence == 'vmware_esxi':
                         Dependencies.vmware_esxi_enabled = False
+                    elif disable_dependence == 'vmware_vcenter':
+                        Dependencies.vmware_vcenter_enabled = False
                     elif disable_dependence == 'virtualbox':
                         Dependencies.virtualbox_enabled = False
                     elif disable_dependence == 'azure':
@@ -108,6 +144,8 @@ class Config:
                         Dependencies.ludus_enabled = False
                     elif disable_dependence == 'proxmox':
                         Dependencies.proxmox_enabled_enabled = False
+                    elif disable_dependence == 'aliyun':
+                        Dependencies.aliyun_enabled = False
                     elif disable_dependence == 'local':
                         Dependencies.provisioner_local_enabled = False
                     elif disable_dependence == 'runner':

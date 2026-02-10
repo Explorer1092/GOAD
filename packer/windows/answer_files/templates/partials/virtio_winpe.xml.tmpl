@@ -1,0 +1,53 @@
+        <component name="Microsoft-Windows-PnpCustomizationsWinPE"
+            publicKeyToken="31bf3856ad364e35" language="neutral"
+            versionScope="nonSxS" processorArchitecture="amd64"
+            xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+
+            <!--
+                 This makes the VirtIO drivers available to Windows, assuming that
+                 the VirtIO driver disk at https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso
+                 (see https://docs.fedorapeople.org/en-US/quick-docs/creating-windows-virtual-machines-using-virtio-drivers/index.html#virtio-win-direct-downloads)
+                 is available as drive {{VIRTIO_DRIVE}}:
+            -->
+            <DriverPaths>
+                <PathAndCredentials wcm:action="add" wcm:keyValue="2">
+                    <Path>{{VIRTIO_DRIVE}}:\viostor\{{VIRTIO_OS}}\amd64</Path>
+                </PathAndCredentials>
+
+                <PathAndCredentials wcm:action="add" wcm:keyValue="3">
+                    <Path>{{VIRTIO_DRIVE}}:\NetKVM\{{VIRTIO_OS}}\amd64</Path>
+                </PathAndCredentials>
+
+                <PathAndCredentials wcm:action="add" wcm:keyValue="4">
+                    <Path>{{VIRTIO_DRIVE}}:\Balloon\{{VIRTIO_OS}}\amd64</Path>
+                </PathAndCredentials>
+
+                <PathAndCredentials wcm:action="add" wcm:keyValue="5">
+                    <Path>{{VIRTIO_DRIVE}}:\pvpanic\{{VIRTIO_OS}}\amd64</Path>
+                </PathAndCredentials>
+
+                <PathAndCredentials wcm:action="add" wcm:keyValue="6">
+                    <Path>{{VIRTIO_DRIVE}}:\qemupciserial\{{VIRTIO_OS}}\amd64</Path>
+                </PathAndCredentials>
+
+                <PathAndCredentials wcm:action="add" wcm:keyValue="7">
+                    <Path>{{VIRTIO_DRIVE}}:\qxldod\{{VIRTIO_OS}}\amd64</Path>
+                </PathAndCredentials>
+
+                <PathAndCredentials wcm:action="add" wcm:keyValue="8">
+                    <Path>{{VIRTIO_DRIVE}}:\vioinput\{{VIRTIO_OS}}\amd64</Path>
+                </PathAndCredentials>
+
+                <PathAndCredentials wcm:action="add" wcm:keyValue="9">
+                    <Path>{{VIRTIO_DRIVE}}:\viorng\{{VIRTIO_OS}}\amd64</Path>
+                </PathAndCredentials>
+
+                <PathAndCredentials wcm:action="add" wcm:keyValue="10">
+                    <Path>{{VIRTIO_DRIVE}}:\vioscsi\{{VIRTIO_OS}}\amd64</Path>
+                </PathAndCredentials>
+
+                <PathAndCredentials wcm:action="add" wcm:keyValue="11">
+                    <Path>{{VIRTIO_DRIVE}}:\vioserial\{{VIRTIO_OS}}\amd64</Path>
+                </PathAndCredentials>
+            </DriverPaths>
+        </component>

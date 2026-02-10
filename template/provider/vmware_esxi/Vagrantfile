@@ -1,3 +1,5 @@
+require 'digest'
+
 Vagrant.configure("2") do |config|
 
 ENV['VAGRANT_DEFAULT_PROVIDER'] = 'vmware_esxi'
@@ -5,6 +7,41 @@ ENV['VAGRANT_DEFAULT_PROVIDER'] = 'vmware_esxi'
 {{lab}}
 
 {{extensions}}
+
+# OpenWrt gateway (optional)
+use_router = (ENV['GOAD_VAGRANT_ESXI_USE_ROUTER'] == 'yes')
+router_ip_suffix = ENV['GOAD_VAGRANT_ESXI_ROUTER_IP_SUFFIX']
+router_ip = "#{ENV['GOAD_VAGRANT_ESXI_IP_RANGE']}.#{router_ip_suffix}"
+
+def mac_for(name, suffix)
+  digest = Digest::MD5.hexdigest("#{name}-#{suffix}")
+  b0 = digest[0, 2].to_i(16) & 0x3f
+  b1 = digest[2, 2].to_i(16)
+  b2 = digest[4, 2].to_i(16)
+  format('00:50:56:%02x:%02x:%02x', b0, b1, b2)
+end
+
+def box_macs(box)
+  if box[:router] || box[:provisioning]
+    [mac_for(box[:name], 'wan'), mac_for(box[:name], 'lan')]
+  else
+    [mac_for(box[:name], 'lan')]
+  end
+end
+
+if use_router
+  boxes.append(
+      { :name => "GOAD-ROUTER",
+        :ip => router_ip,
+        :box => ENV['GOAD_VAGRANT_ESXI_ROUTER_BOX'],
+        :box_version => ENV['GOAD_VAGRANT_ESXI_ROUTER_BOX_VERSION'],
+        :os => "linux",
+        :cpus => 1,
+        :mem => 512,
+        :router => true
+      }
+  )
+end
 
 # auto-load .env if vagrant-env installed
 if Vagrant.has_plugin?("vagrant-env") then
@@ -20,6 +57,7 @@ boxes.append(
       :os => "linux",
       :cpus => 2,
       :mem => 2000,
+      :provisioning => true,
       :forwarded_port => [ {:guest => 22, :host => 2210, :id => "ssh"} ]
     }
 )
@@ -45,38 +83,89 @@ boxes.append(
         v.esxi_hostname         = ENV['GOAD_VAGRANT_ESXIHOSTNAME']
         v.esxi_username         = ENV['GOAD_VAGRANT_ESXIUSERNAME']
         v.esxi_password         = 'env:GOAD_VAGRANT_ESXIPASSWORD'
-        v.esxi_virtual_network  = [ ENV['GOAD_VAGRANT_ESXINETNAT'], ENV['GOAD_VAGRANT_ESXINETDOM'] ]
-        v.guest_numvcpus        = '4'
-        v.guest_memsize         = '6000'
+        if use_router
+          if box[:router] || box[:provisioning]
+            v.esxi_virtual_network  = [ ENV['GOAD_VAGRANT_ESXINETNAT'], ENV['GOAD_VAGRANT_ESXINETDOM'] ]
+          else
+            v.esxi_virtual_network  = [ ENV['GOAD_VAGRANT_ESXINETDOM'] ]
+          end
+        else
+          v.esxi_virtual_network  = [ ENV['GOAD_VAGRANT_ESXINETNAT'], ENV['GOAD_VAGRANT_ESXINETDOM'] ]
+        end
+        if box[:router] || box[:provisioning]
+          v.guest_numvcpus        = box[:cpus].to_s
+          v.guest_memsize         = box[:mem].to_s
+          v.guest_guestos         = 'otherlinux-64'
+        else
+          v.guest_numvcpus        = '4'
+          v.guest_memsize         = '6000'
+        end
+        if use_router
+          v.guest_mac_address     = box_macs(box)
+        end
         v.guest_name            = box[:name]
         v.esxi_disk_store       = ENV['GOAD_VAGRANT_ESXISTORE']
+      end
+
+      if box[:router] || box[:provisioning]
+        target.vm.box_architecture = "amd64"
       end
 
       target.vm.box_download_insecure = box[:box]
       target.vm.box = box[:box]
       if box.has_key?(:box_version)
-        target.vm.box_version = box[:box_version]
+        if !box[:box_version].to_s.empty?
+          target.vm.box_version = box[:box_version]
+        end
       end
 
       # issues/49
       target.vm.synced_folder '.', '/vagrant', disabled: true
 
       # IP
-      target.vm.network :private_network, ip: box[:ip]
+      if use_router && (box[:router] || box[:provisioning])
+        # Skip vm.network to avoid guest network config for router/provisioning.
+      else
+        target.vm.network :private_network, ip: box[:ip]
+      end
 
       # OS specific
       if box[:os] == "windows"
         target.vm.guest = :windows
         target.vm.communicator = "winrm"
+        target.winrm.username = "vagrant"
+        target.winrm.password = "vagrant"
+        target.winrm.transport = :plaintext
+        target.winrm.basic_auth_only = true
         target.vm.provision :shell, :path => "../../../vagrant/Install-WMF3Hotfix.ps1", privileged: false
         target.vm.provision :shell, :path => "../../../vagrant/ConfigureRemotingForAnsible.ps1", privileged: false
 
         # fix ip for vmware
         if ENV['VAGRANT_DEFAULT_PROVIDER'] == "vmware_esxi"
-          target.vm.provision :shell, :path => "../../../vagrant/fix_ip.ps1", privileged: false, args: box[:ip]
+          if use_router
+            target.vm.provision :shell, :path => "../../../vagrant/fix_ip.ps1", privileged: false, args: "#{box[:ip]} #{router_ip}"
+          else
+            target.vm.provision :shell, :path => "../../../vagrant/fix_ip.ps1", privileged: false, args: box[:ip]
+          end
         end
       else
         target.vm.communicator = "ssh"
+        if use_router && box[:provisioning]
+          lan_mac = box_macs(box)[1]
+          target.vm.provision :shell, inline: <<~SHELL
+            sudo tee /etc/netplan/99-goad-lan.yaml >/dev/null <<'EOF'
+            network:
+              version: 2
+              ethernets:
+                lan0:
+                  match:
+                    macaddress: #{lan_mac}
+                  set-name: lan0
+                  addresses: [#{box[:ip]}/24]
+            EOF
+            sudo netplan apply
+          SHELL
+        end
       end
 
       if box.has_key?(:forwarded_port)

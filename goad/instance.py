@@ -57,6 +57,8 @@ class LabInstance:
             self.provider.set_resource_group(self.lab_name + '-' + self.instance_id)
         if self.provider_name == AWS:
             self.provider.set_tag(self.lab_name + '-' + self.instance_id)
+        if self.provider_name == ALIYUN:
+            self.provider.set_tag(self.lab_name + '-' + self.instance_id)
         if self.provider_name == LUDUS:
             user_id = self.lab_name + self.instance_id.split('-')[0]
             user_id = user_id.replace('-', '').replace('_', '')
@@ -75,13 +77,21 @@ class LabInstance:
             return False
 
         self.provisioner.set_instance_path(instance_path)
+        if self.provider_name == VMWARE_ESXI:
+            esxi_jumpbox_vagrant = self.config.get_value('vmware_esxi', 'esxi_vagrant_on_jumpbox', fallback='no') == 'yes'
+            if esxi_jumpbox_vagrant and self.provisioner_name != PROVISIONING_VM:
+                Log.warning('esxi_vagrant_on_jumpbox is enabled but provisioner is not "vm"; PROVISIONING VM is required')
+            if hasattr(self.provider, 'set_jumpbox_vagrant'):
+                self.provider.set_jumpbox_vagrant(esxi_jumpbox_vagrant)
+            if hasattr(self.provider, 'set_jumpbox'):
+                self.provider.set_jumpbox(getattr(self.provisioner, 'jumpbox', None))
         return True
 
     def is_terraform(self):
-        return self.provider_name == AWS or self.provider_name == AZURE or self.provider_name == PROXMOX
+        return self.provider_name == AWS or self.provider_name == AZURE or self.provider_name == PROXMOX or self.provider_name == ALIYUN
 
     def is_vagrant(self):
-        return self.provider_name == VMWARE or self.provider_name == VMWARE_ESXI or self.provider_name == VIRTUALBOX
+        return self.provider_name in [VMWARE, VMWARE_ESXI, VMWARE_VCENTER, VIRTUALBOX]
 
     def is_ludus(self):
         return self.provider_name == LUDUS
@@ -137,6 +147,10 @@ class LabInstance:
 
         # load extensions Vagrantfile into instance
         use_provisioning_vm = True if self.provisioner_name == PROVISIONING_VM else False
+        if self.provider_name == VMWARE_ESXI:
+            esxi_jumpbox_vagrant = self.config.get_value('vmware_esxi', 'esxi_vagrant_on_jumpbox', fallback='no') == 'yes'
+            if esxi_jumpbox_vagrant:
+                use_provisioning_vm = True
         environment = Environment(loader=FileSystemLoader(GoadPath.get_template_path(self.provider_name)))
         vagrantfile_template = environment.get_template("Vagrantfile")
         vagrantfile_content = vagrantfile_template.render(
@@ -163,6 +177,10 @@ class LabInstance:
         esxi_net_nat = config.get_value('vmware_esxi', 'esxi_net_nat')
         esxi_net_domain = config.get_value('vmware_esxi', 'esxi_net_domain')
         esxi_datastore = config.get_value('vmware_esxi', 'esxi_datastore')
+        esxi_use_router = config.get_value('vmware_esxi', 'esxi_use_router')
+        esxi_router_box = config.get_value('vmware_esxi', 'esxi_router_box')
+        esxi_router_box_version = config.get_value('vmware_esxi', 'esxi_router_box_version')
+        esxi_router_ip_suffix = config.get_value('vmware_esxi', 'esxi_router_ip_suffix')
         
         # load .env template
         environment = Environment(loader=FileSystemLoader(GoadPath.get_template_path(self.provider_name)))
@@ -173,7 +191,46 @@ class LabInstance:
             esxi_password = esxi_password,
             esxi_net_nat = esxi_net_nat,
             esxi_net_domain = esxi_net_domain,
-            esxi_datastore = esxi_datastore
+            esxi_datastore = esxi_datastore,
+            esxi_use_router = esxi_use_router,
+            esxi_router_box = esxi_router_box,
+            esxi_router_box_version = esxi_router_box_version,
+            esxi_router_ip_suffix = esxi_router_ip_suffix,
+            ip_range = self.ip_range
+        )
+
+        # create .env file
+        instance_env_file = self.instance_provider_path + sep + '.env'
+        with open(instance_env_file, mode="w", encoding="utf-8") as vagrantfile:
+            vagrantfile.write(envfile_content)
+            Log.info(f'Instance .env created : {Utils.get_relative_path(instance_env_file)}')
+
+    def _create_vcenter_env(self):
+        # get vcenter config
+        config = self.config
+        vcenter_hostname = config.get_value('vmware_vcenter', 'vcenter_hostname')
+        vcenter_username = config.get_value('vmware_vcenter', 'vcenter_username')
+        vcenter_password = config.get_value('vmware_vcenter', 'vcenter_password')
+        vcenter_datacenter = config.get_value('vmware_vcenter', 'vcenter_datacenter')
+        vcenter_cluster = config.get_value('vmware_vcenter', 'vcenter_cluster')
+        vcenter_datastore = config.get_value('vmware_vcenter', 'vcenter_datastore')
+        vcenter_net_nat = config.get_value('vmware_vcenter', 'vcenter_net_nat')
+        vcenter_net_domain = config.get_value('vmware_vcenter', 'vcenter_net_domain')
+        vcenter_insecure = config.get_value('vmware_vcenter', 'vcenter_insecure')
+
+        # load .env template
+        environment = Environment(loader=FileSystemLoader(GoadPath.get_template_path(self.provider_name)))
+        envfile_template = environment.get_template(".env")
+        envfile_content = envfile_template.render(
+            vcenter_hostname=vcenter_hostname,
+            vcenter_username=vcenter_username,
+            vcenter_password=vcenter_password,
+            vcenter_datacenter=vcenter_datacenter,
+            vcenter_cluster=vcenter_cluster,
+            vcenter_datastore=vcenter_datastore,
+            vcenter_net_nat=vcenter_net_nat,
+            vcenter_net_domain=vcenter_net_domain,
+            vcenter_insecure=vcenter_insecure
         )
 
         # create .env file
@@ -287,6 +344,8 @@ class LabInstance:
             self._create_vagrantfile()
         if self.provider_name == VMWARE_ESXI:
             self._create_esxi_env()
+        elif self.provider_name == VMWARE_VCENTER:
+            self._create_vcenter_env()
         if self.is_ludus():
             self._create_ludus_config_file()
         if self.is_terraform():

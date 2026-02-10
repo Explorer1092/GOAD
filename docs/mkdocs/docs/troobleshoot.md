@@ -274,13 +274,15 @@ pveum role modify Packer -privs "VM.Config.Disk VM.Config.CPU VM.Config.Memory D
 
 The error may look similar to below:
 ```
-root@goadprovisioning:~/GOAD/packer/proxmox# packer build -var-file=windows_server2019_proxmox_cloudinit.pkvars.hcl .
+root@goadprovisioning:~/GOAD/packer# packer build -var-file=windows/config.auto.pkrvars.hcl \
+  -var-file=windows/vars/proxmox/windows_server2019_cloudinit.pkrvars.hcl \
+  sources.vsphere.pkr.hcl sources.proxmox.pkr.hcl windows
 proxmox-iso.windows: output will be in this color.
 
 ==> proxmox-iso.windows: Retrieving additional ISO
-==> proxmox-iso.windows: Trying ./iso/Autounattend_winserver2019_cloudinit.iso
-==> proxmox-iso.windows: Trying ./iso/Autounattend_winserver2019_cloudinit.iso?checksum=sha256%3A43857cb780de3a58696285f644034499d4b29608b3c511feb27e315832b696c4
-==> proxmox-iso.windows: ./iso/Autounattend_winserver2019_cloudinit.iso?checksum=sha256%3A43857cb780de3a58696285f644034499d4b29608b3c511feb27e315832b696c4 => /root/GOAD/packer/proxmox/iso/Autounattend_winserver2019_cloudinit.iso
+==> proxmox-iso.windows: Trying ./windows/iso/Autounattend_winserver2019_cloudinit.iso
+==> proxmox-iso.windows: Trying ./windows/iso/Autounattend_winserver2019_cloudinit.iso?checksum=sha256%3A43857cb780de3a58696285f644034499d4b29608b3c511feb27e315832b696c4
+==> proxmox-iso.windows: ./windows/iso/Autounattend_winserver2019_cloudinit.iso?checksum=sha256%3A43857cb780de3a58696285f644034499d4b29608b3c511feb27e315832b696c4 => /root/GOAD/packer/windows/iso/Autounattend_winserver2019_cloudinit.iso
     proxmox-iso.windows: Uploaded ISO to local:iso/Autounattend_winserver2019_cloudinit.iso
 ==> proxmox-iso.windows: Creating VM
 ==> proxmox-iso.windows: No VM ID given, getting next free from Proxmox
@@ -290,17 +292,19 @@ proxmox-iso.windows: output will be in this color.
 Filesystems such as ZFS (and others) do not support qcow2. From my reading the best approach is to use an ext4 filesystem and modify `config.auto.pkrvars.hcl` with the newly created ext4 volume.
 
 ```
-root@goadprovisioning:~/GOAD/packer/proxmox# vi config.auto.pkrvars.hcl
+root@goadprovisioning:~/GOAD/packer# vi windows/config.auto.pkrvars.hcl
 ...
 proxmox_vm_storage      = "ext4-qcow2"
 ...
-root@goadprovisioning:~/GOAD/packer/proxmox# packer build -var-file=windows_server2019_proxmox_cloudinit.pkvars.hcl .
+root@goadprovisioning:~/GOAD/packer# packer build -var-file=windows/config.auto.pkrvars.hcl \
+  -var-file=windows/vars/proxmox/windows_server2019_cloudinit.pkrvars.hcl \
+  sources.vsphere.pkr.hcl sources.proxmox.pkr.hcl windows
 proxmox-iso.windows: output will be in this color.
 
 ==> proxmox-iso.windows: Retrieving additional ISO
-==> proxmox-iso.windows: Trying ./iso/Autounattend_winserver2019_cloudinit.iso
-==> proxmox-iso.windows: Trying ./iso/Autounattend_winserver2019_cloudinit.iso?checksum=sha256%3A43857cb780de3a58696285f644034499d4b29608b3c511feb27e315832b696c4
-==> proxmox-iso.windows: ./iso/Autounattend_winserver2019_cloudinit.iso?checksum=sha256%3A43857cb780de3a58696285f644034499d4b29608b3c511feb27e315832b696c4 => /root/GOAD/packer/proxmox/iso/Autounattend_winserver2019_cloudinit.iso
+==> proxmox-iso.windows: Trying ./windows/iso/Autounattend_winserver2019_cloudinit.iso
+==> proxmox-iso.windows: Trying ./windows/iso/Autounattend_winserver2019_cloudinit.iso?checksum=sha256%3A43857cb780de3a58696285f644034499d4b29608b3c511feb27e315832b696c4
+==> proxmox-iso.windows: ./windows/iso/Autounattend_winserver2019_cloudinit.iso?checksum=sha256%3A43857cb780de3a58696285f644034499d4b29608b3c511feb27e315832b696c4 => /root/GOAD/packer/windows/iso/Autounattend_winserver2019_cloudinit.iso
     proxmox-iso.windows: Uploaded ISO to local:iso/Autounattend_winserver2019_cloudinit.iso
 ==> proxmox-iso.windows: Creating VM
 ==> proxmox-iso.windows: No VM ID given, getting next free from Proxmox
@@ -339,5 +343,4 @@ fatal: [dc01]: UNREACHABLE! => {"changed": false, "msg": "ssl: HTTPSConnectionPo
 
 - may be the vm is not well ready after the terraform creation. retry the install.
 - if you still get the error connect to the vm and verify the static ip is corresponding with the one expect.
-
 

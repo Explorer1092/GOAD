@@ -10,8 +10,11 @@
     - Cloud :
         - :material-microsoft-azure: [Azure](azure.md)
         - :simple-amazon: [Aws](aws.md)
+        - :simple-alibabacloud: [Aliyun](aliyun.md)
 
     - Hypervisor :
+        - :simple-vmware: [Vmware ESXi](vmware_esxi.md)
+        - :simple-vmware: [Vmware vCenter](vmware_vcenter.md)
         - :simple-proxmox: [Proxmox](proxmox.md)
         - 🏟️ [Ludus](ludus.md)
 

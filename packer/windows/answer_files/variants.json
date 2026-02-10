@@ -1,0 +1,266 @@
+{
+  "profiles": {
+    "locale": {
+      "zh-CN": {
+        "SETUP_UI_LANGUAGE": "zh-CN",
+        "INPUT_LOCALE": "zh-CN",
+        "SYSTEM_LOCALE": "zh-CN",
+        "UI_LANGUAGE": "zh-CN",
+        "UI_LANGUAGE_FALLBACK": "zh-CN",
+        "USER_LOCALE": "zh-CN"
+      },
+      "en-US": {
+        "SETUP_UI_LANGUAGE": "en-US",
+        "INPUT_LOCALE": "en-US",
+        "SYSTEM_LOCALE": "en-US",
+        "UI_LANGUAGE": "en-US",
+        "UI_LANGUAGE_FALLBACK": "en-US",
+        "USER_LOCALE": "en-US"
+      },
+      "en-US-fr-FR": {
+        "SETUP_UI_LANGUAGE": "en-US",
+        "INPUT_LOCALE": "fr-FR",
+        "SYSTEM_LOCALE": "en-US",
+        "UI_LANGUAGE": "en-US",
+        "UI_LANGUAGE_FALLBACK": "fr-FR",
+        "USER_LOCALE": "en-US"
+      }
+    },
+    "os": {
+      "windows_server_2016": {
+        "DISK_LABEL": "Windows 2016",
+        "IMAGE_INDEX": "4",
+        "IMAGE_NAME": "Windows Server 2016 SERVERSTANDARD",
+        "PRODUCT_KEY": "CB7KF-BWN84-R7R2Y-793K2-8XDDG",
+        "COMPUTER_NAME": "vagrant-2016",
+        "VIRTIO_OS": "2k16",
+        "ACCOUNT_DISPLAY_NAME": "Vagrant"
+      },
+      "windows_server_2019": {
+        "DISK_LABEL": "Windows 2019",
+        "IMAGE_INDEX": "4",
+        "IMAGE_NAME": "Windows Server 2019 SERVERDATACENTER",
+        "PRODUCT_KEY": "WMDGN-G9PQG-XVVXX-R3X43-63DFG",
+        "COMPUTER_NAME": "vagrant-2019",
+        "VIRTIO_OS": "2k19",
+        "ACCOUNT_DISPLAY_NAME": "Vagrant"
+      },
+      "windows_server_2022": {
+        "DISK_LABEL": "Windows 2022",
+        "IMAGE_NAME": "Windows Server 2022 SERVERDATACENTER",
+        "COMPUTER_NAME": "vagrant-2022",
+        "VIRTIO_OS": "2k19",
+        "ACCOUNT_DISPLAY_NAME": "Vagrant"
+      },
+      "windows_10": {
+        "DISK_LABEL": "Windows 10",
+        "IMAGE_INDEX": "1",
+        "IMAGE_NAME": "Windows 10 Enterprise Evaluation",
+        "PRODUCT_KEY": "M7XTQ-FN8P6-TTKYV-9D4CC-J462D",
+        "PRODUCT_KEY_BLOCK": true,
+        "COMPUTER_NAME": "vagrant-10",
+        "VIRTIO_OS": "w10",
+        "ACCOUNT_DISPLAY_NAME": "vagrant"
+      },
+      "windows_11": {
+        "DISK_LABEL": "Windows 11",
+        "IMAGE_NAME": "Windows 11 Enterprise Evaluation",
+        "PRODUCT_KEY": "",
+        "PRODUCT_KEY_BLOCK": false,
+        "COMPUTER_NAME": "vagrant-11",
+        "VIRTIO_OS": "w10",
+        "ACCOUNT_DISPLAY_NAME": "vagrant"
+      }
+    },
+    "drives": {
+      "vsphere": {
+        "SCRIPTS_DRIVE": "A",
+        "TIME_ZONE": "UTC"
+      },
+      "proxmox": {
+        "SCRIPTS_DRIVE": "G",
+        "TIME_ZONE": "Romance Standard Time"
+      },
+      "vagrant": {
+        "SCRIPTS_DRIVE": "A",
+        "TIME_ZONE": "Pacific Standard Time"
+      }
+    },
+    "update_strategy": {
+      "no_updates": {
+        "NO_UPDATES": true,
+        "WITH_UPDATES": false
+      },
+      "with_updates": {
+        "NO_UPDATES": false,
+        "WITH_UPDATES": true
+      }
+    }
+  },
+  "variants": [
+    {
+      "template": "templates/vsphere_server.xml.tmpl",
+      "output": "vsphere/windows_server_2019/default/zh-CN/Autounattend.xml",
+      "profiles": {
+        "locale": "zh-CN",
+        "os": "windows_server_2019",
+        "drives": "vsphere"
+      },
+      "vars": {
+        "OFFLINE_IMAGE": "Windows Server 2019 SERVERDATACENTER"
+      }
+    },
+    {
+      "template": "templates/vsphere_server.xml.tmpl",
+      "output": "vsphere/windows_server_2016/default/zh-CN/Autounattend.xml",
+      "profiles": {
+        "locale": "zh-CN",
+        "os": "windows_server_2016",
+        "drives": "vsphere"
+      },
+      "vars": {
+        "OFFLINE_IMAGE": "Windows Server 2016 SERVERSTANDARD"
+      }
+    },
+    {
+      "template": "templates/vsphere_w10.xml.tmpl",
+      "output": "vsphere/windows_10/default/zh-CN/Autounattend.xml",
+      "profiles": {
+        "locale": "zh-CN",
+        "os": "windows_10",
+        "drives": "vsphere"
+      },
+      "vars": {
+        "OFFLINE_IMAGE": "d:/sources/install_windows 10 enterprise.clg"
+      }
+    },
+    {
+      "template": "templates/proxmox_server.xml.tmpl",
+      "output": "proxmox/windows_server_2019/cloudinit/en-US-fr-FR/Autounattend.xml",
+      "profiles": {
+        "locale": "en-US-fr-FR",
+        "os": "windows_server_2019",
+        "drives": "proxmox",
+        "update_strategy": "no_updates"
+      },
+      "vars": {
+        "OFFLINE_IMAGE": "Windows Server 2012 R2 SERVERSTANDARD"
+      }
+    },
+    {
+      "template": "templates/proxmox_server.xml.tmpl",
+      "output": "proxmox/windows_server_2019/cloudinit_uptodate/en-US-fr-FR/Autounattend.xml",
+      "profiles": {
+        "locale": "en-US-fr-FR",
+        "os": "windows_server_2019",
+        "drives": "proxmox",
+        "update_strategy": "with_updates"
+      },
+      "vars": {
+        "OFFLINE_IMAGE": "Windows Server 2012 R2 SERVERSTANDARD"
+      }
+    },
+    {
+      "template": "templates/proxmox_server.xml.tmpl",
+      "output": "proxmox/windows_server_2016/cloudinit/en-US-fr-FR/Autounattend.xml",
+      "profiles": {
+        "locale": "en-US-fr-FR",
+        "os": "windows_server_2016",
+        "drives": "proxmox",
+        "update_strategy": "no_updates"
+      },
+      "vars": {
+        "OFFLINE_IMAGE": "Windows Server 2012 R2 SERVERSTANDARD"
+      }
+    },
+    {
+      "template": "templates/proxmox_w10.xml.tmpl",
+      "output": "proxmox/windows_10/cloudinit/en-US/Autounattend.xml",
+      "profiles": {
+        "locale": "en-US",
+        "os": "windows_10",
+        "drives": "proxmox",
+        "update_strategy": "no_updates"
+      },
+      "vars": {
+        "OFFLINE_IMAGE": "d:/sources/install_windows 7 ENTERPRISE.clg"
+      }
+    },
+    {
+      "template": "templates/proxmox_w10.xml.tmpl",
+      "output": "proxmox/windows_10/cloudinit_uptodate/en-US/Autounattend.xml",
+      "profiles": {
+        "locale": "en-US",
+        "os": "windows_10",
+        "drives": "proxmox",
+        "update_strategy": "with_updates"
+      },
+      "vars": {
+        "OFFLINE_IMAGE": "d:/sources/install_windows 7 ENTERPRISE.clg"
+      }
+    },
+    {
+      "template": "templates/vagrant_server.xml.tmpl",
+      "output": "vagrant/windows_server_2016/default/en-US/Autounattend.xml",
+      "profiles": {
+        "locale": "en-US",
+        "os": "windows_server_2016",
+        "drives": "vagrant"
+      },
+      "vars": {
+        "VIRTIO_DRIVERS": false,
+        "OFFLINE_IMAGE": "Windows Server 2012 R2 SERVERSTANDARD"
+      }
+    },
+    {
+      "template": "templates/vagrant_server.xml.tmpl",
+      "output": "vagrant/windows_server_2019/default/en-US/Autounattend.xml",
+      "profiles": {
+        "locale": "en-US",
+        "os": "windows_server_2019",
+        "drives": "vagrant"
+      },
+      "vars": {
+        "VIRTIO_DRIVERS": true,
+        "OFFLINE_IMAGE": "Windows Server 2012 R2 SERVERSTANDARD"
+      }
+    },
+    {
+      "template": "templates/vagrant_server.xml.tmpl",
+      "output": "vagrant/windows_server_2022/default/en-US/Autounattend.xml",
+      "profiles": {
+        "locale": "en-US",
+        "os": "windows_server_2022",
+        "drives": "vagrant"
+      },
+      "vars": {
+        "VIRTIO_DRIVERS": true,
+        "OFFLINE_IMAGE": "Windows Server 2012 R2 SERVERSTANDARD"
+      }
+    },
+    {
+      "template": "templates/vagrant_w10.xml.tmpl",
+      "output": "vagrant/windows_10/default/en-US/Autounattend.xml",
+      "profiles": {
+        "locale": "en-US",
+        "os": "windows_10",
+        "drives": "vagrant"
+      },
+      "vars": {
+        "OFFLINE_IMAGE": "d:/sources/install_windows 7 ENTERPRISE.clg"
+      }
+    },
+    {
+      "template": "templates/vagrant_w10.xml.tmpl",
+      "output": "vagrant/windows_11/default/en-US/Autounattend.xml",
+      "profiles": {
+        "locale": "en-US",
+        "os": "windows_11",
+        "drives": "vagrant"
+      },
+      "vars": {
+        "OFFLINE_IMAGE": "d:/sources/install_windows 7 ENTERPRISE.clg"
+      }
+    }
+  ]
+}

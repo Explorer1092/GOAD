@@ -1,4 +1,7 @@
 - name: set password policy
+  become: yes
+  become_method: runas
+  become_user: SYSTEM
   ansible.windows.win_powershell:
     script: |
       [CmdletBinding()]

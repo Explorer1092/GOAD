@@ -228,7 +228,9 @@ class Command:
         Log.info(f'Launch Rsync {source} -> {destination}')
         ssh_command = f"ssh -o StrictHostKeyChecking=no -i {ssh_key}"
         exclude_from = ''
+        exclude_args = ''
         if exclude:
             exclude_from = '--exclude-from=".gitignore"'
-        command = f'rsync -a {exclude_from} -e "{ssh_command}" {source} {destination}'
+            exclude_args = '--exclude=".git" --exclude="*.ova" --exclude="packer/windows/iso/"'
+        command = f'rsync -a {exclude_from} {exclude_args} -e "{ssh_command}" {source} {destination}'
         self.run_shell(command, source)

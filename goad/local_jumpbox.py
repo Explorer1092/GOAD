@@ -1,4 +1,5 @@
 import os.path
+import subprocess
 
 from goad.command.linux import LinuxCommand
 from goad.command.wsl import WslCommand
@@ -13,9 +14,14 @@ class LocalJumpBox(JumpBox):
     def __init__(self, instance, creation=False):
         super().__init__(instance, creation)
         self.username = 'vagrant'
+        self.use_jumpbox_vagrant = False
+        if instance.provider_name == VMWARE_ESXI:
+            self.use_jumpbox_vagrant = instance.config.get_value('vmware_esxi', 'esxi_vagrant_on_jumpbox', fallback='no') == 'yes'
 
     def provision(self):
         script_name = self.provider.jumpbox_setup_script
+        if self.use_jumpbox_vagrant:
+            script_name = 'setup_local_jumpbox_esxi.sh'
         script_file = GoadPath.get_script_file(script_name)
         if not os.path.isfile(script_file):
             Log.error(f'script file: {script_file} not found !')
@@ -33,7 +39,27 @@ class LocalJumpBox(JumpBox):
             provider_folder = f'{self.instance_path}/provider/.vagrant/machines/PROVISIONING/'.replace('/', os.path.sep)
             provider_folders = Utils.list_folders(provider_folder)
             if len(provider_folders) > 0:
-                return provider_folder + provider_folders[0] + os.path.sep + 'private_key'
+                key_path = provider_folder + provider_folders[0] + os.path.sep + 'private_key'
+                if os.path.isfile(key_path):
+                    return key_path
+            provider_path = f'{self.instance_path}/provider'.replace('/', os.path.sep)
+            try:
+                envfile = os.path.join(provider_path, '.env')
+                if os.path.isfile(envfile):
+                    command = "bash -lc 'source .env && vagrant ssh-config PROVISIONING'"
+                    result = subprocess.run(command, cwd=provider_path, shell=True,
+                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                else:
+                    result = subprocess.run(['vagrant', 'ssh-config', 'PROVISIONING'], cwd=provider_path,
+                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                if result.returncode == 0:
+                    for line in result.stdout.splitlines():
+                        if line.strip().startswith('IdentityFile'):
+                            identity_path = line.split(None, 1)[1].strip()
+                            if os.path.isfile(identity_path):
+                                return identity_path
+            except FileNotFoundError:
+                pass
             key_supposed_path = provider_folder + '<provider_name>' + os.path.sep + 'private_key'
             Log.error(f'PROVISIONING ssh key not found at : {key_supposed_path}')
         return None
@@ -58,5 +84,22 @@ class LocalJumpBox(JumpBox):
                 if Utils.is_windows():
                     # if is windows convert line ending
                     self.run_command(f"dos2unix {destination_file}", '~')
+        else:
+            Log.error('Can not sync source jumpbox ip is invalid')
+
+    def sync_repo_sources(self):
+        """
+        rsync full GOAD repo and workspace to the jumpbox (required for vagrant-on-jumpbox mode)
+        """
+        if Utils.is_valid_ipv4(self.ip):
+            source = GoadPath.get_project_path()
+            destination = f'{self.username}@{self.ip}:~/GOAD/'
+            self.command.rsync(source, destination, self.ssh_key)
+
+            source = self.instance_path
+            destination = f'{self.username}@{self.ip}:~/GOAD/workspace/'
+            ssh_command = f"ssh -o StrictHostKeyChecking=no -i {self.ssh_key}"
+            rsync_cmd = f'rsync -a --exclude=".vagrant" -e "{ssh_command}" {source} {destination}'
+            self.command.run_shell(rsync_cmd, source)
         else:
             Log.error('Can not sync source jumpbox ip is invalid')

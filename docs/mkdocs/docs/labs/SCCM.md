@@ -28,7 +28,7 @@ All vms got defender activated
 ## proxmox installation
 - In order to use the proxmox provider follow this :
 
-1) create a template with the windows_server2019_proxmox_cloudinit_uptodate.pkvars.hcl packer file (guide here: https://mayfly277.github.io/posts/GOAD-on-proxmox-part2-packer/) (note the id after the creation)
+1) create a template with the `windows/vars/proxmox/windows_server2019_cloudinit_uptodate.pkrvars.hcl` var file (guide here: https://mayfly277.github.io/posts/GOAD-on-proxmox-part2-packer/) (note the id after the creation)
 
 2) create the variable file (ad/SCCM/providers/proxmox/terraform/variables.tf) by coping the template (ad/SCCM/providers/proxmox/terraform/variables.tf.template) and change the value according to your proxmox environnement
 

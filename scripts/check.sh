@@ -7,7 +7,7 @@ ERROR=$(tput setaf 1; echo -n "  [!]"; tput sgr0)
 GOODTOGO=$(tput setaf 2; echo -n "  [✓]"; tput sgr0)
 INFO=$(tput setaf 3; echo -n "  [-]"; tput sgr0)
 
-PROVIDERS="virtualbox vmware azure proxmox vmware_esxi"
+PROVIDERS="virtualbox vmware azure proxmox vmware_esxi vmware_vcenter"
 ANSIBLE_HOSTS="docker local"
 print_usage() {
   echo "Usage: ./check.sh <provider> <ansible_host>"
@@ -390,6 +390,22 @@ check_vagrant_env_plugin() {
   fi
 }
 
+check_vagrant_vsphere_plugin() {
+  # Ensure the vagrant-vsphere plugin is installed
+  VAGRANT_VSPHERE_PLUGIN_INSTALLED=$(vagrant plugin list | grep -c 'vagrant-vsphere')
+  if [ "$VAGRANT_VSPHERE_PLUGIN_INSTALLED" != "1" ]; then
+    (echo >&2 "${ERROR} The vagrant-vsphere plugin is required and was not found. This script will attempt to install it now.")
+    if ! $(which vagrant) plugin install "vagrant-vsphere"; then
+      (echo >&2 "Unable to install the vagrant-vsphere plugin. Please try to do so manually and re-run this script.")
+      exit 1
+    else
+      (echo >&2 "${GOODTOGO} The vagrant-vsphere plugin was successfully installed!")
+    fi
+  else
+    (echo >&2 "${GOODTOGO} The vagrant-vsphere plugin is currently installed")
+  fi
+}
+
 check_ovftool_installed() {
   if ! which ovftool >/dev/null; then
     (echo >&2 "${ERROR} ovftool was not found in your PATH.")
@@ -472,6 +488,23 @@ main() {
       check_vagrant_esxi_plugin
       check_vagrant_env_plugin
       check_ovftool_installed
+      case $ANSIBLE_HOST in
+        "docker")
+          check_docker_installed
+          ;;
+        "local")
+          check_python_env
+          ;;
+        *)
+          ;;
+      esac
+      ;;
+    "vmware_vcenter")
+      (echo >&2 "[+] Enumerating vmware_vcenter")
+      check_vagrant_path
+      check_vagrant_reload_plugin
+      check_vagrant_vsphere_plugin
+      check_vagrant_env_plugin
       case $ANSIBLE_HOST in
         "docker")
           check_docker_installed

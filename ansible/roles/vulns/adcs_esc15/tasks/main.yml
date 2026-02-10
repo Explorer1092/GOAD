@@ -10,11 +10,27 @@
       $displayName = "Web Server"
       $groupName = "Domain Users"
 
+      # Use the template name to resolve localized display name if needed
+      try {
+        Import-Module ActiveDirectory
+        $base = "CN=Certificate Templates,CN=Public Key Services,CN=Services,CN=Configuration," + (Get-ADDomain).DistinguishedName
+        $tpl = Get-ADObject -LDAPFilter "(name=WebServer)" -SearchBase $base -Properties displayName
+        if ($null -ne $tpl -and $tpl.displayName) {
+          $displayName = $tpl.displayName
+        }
+      } catch {
+        # keep default display name
+      }
+
+      if (-not $displayName) {
+        $displayName = "Web 服务器"
+      }
+
       Set-ADCSTemplateACL -DisplayName $displayName -Type Allow -Identity $groupName -Enroll
     error_action: stop
   vars:
     ansible_become: yes
     ansible_become_method: runas
     domain_name: "{{domain}}"
-    ansible_become_user: "{{domain_username}}"
-    ansible_become_password: "{{domain_password}}"
+    ansible_become_user: "{{domain_admin}}"
+    ansible_become_password: "{{domain_admin_password}}"

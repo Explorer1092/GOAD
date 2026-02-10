@@ -56,7 +56,7 @@ The goad management script is now written in :simple-python: python to permit mo
 - GOAD script cover the providing and provisioning part
 
 - The install script take multiple parameters:
-    - `-p`  : the provider to use (vmware/virtualbox/proxmox/ludus/azure/aws)
+    - `-p`  : the provider to use (vmware/virtualbox/vmware_esxi/vmware_vcenter/proxmox/ludus/azure/aws/aliyun)
     - `-l`  : the lab to install (GOAD/GOAD-Light/SCCM/NHA/MINILAB)
     - `-m`  : the method of installation (local/runner/docker/remote), most of the time don't change it
     - `-ip` : the ip range to use
@@ -120,6 +120,8 @@ requests
 - You can launch goad without installing all the pip package but for that you will have to disable some dependencies with the `-d` arguments:
 ```
 -d vmware     : disable vmware provider
+-d vmware_esxi : disable vmware esxi provider
+-d vmware_vcenter : disable vmware vcenter provider
 -d virtualbox : disable virtualbox provider
 -d azure      : disable azure provider
 -d aws        : disable azure provider
@@ -144,7 +146,7 @@ requests
 [default]
 ; lab: goad / goad-light / minilab / nha / sccm
 lab = GOAD
-; provider : virtualbox / vmware / aws / azure / proxmox
+; provider : virtualbox / vmware / vmware_esxi / vmware_vcenter / aws / azure / proxmox / aliyun
 provider = vmware
 ; provisioner method : local / remote
 provisioner = local

@@ -1,0 +1,14 @@
+enable_proxmox = true
+enable_vsphere = false
+
+proxmox_vm_name              = "WinServer2019x64-cloudinit-qcow2"
+proxmox_template_description = "Windows Server 2019 64-bit - build 17763.737.190906-2324 - template built with Packer - cloudinit - {{isotime \"2006-01-02 03:04:05\"}}"
+proxmox_iso_file             = "local:iso/windows_server2019_x64FREE_en-us.iso"
+proxmox_autounattend_iso     = "./windows/iso/Autounattend_winserver2019_cloudinit.iso"
+proxmox_autounattend_checksum = "sha256:2b3eeb1346c38a3ef5e4daefcf58d212471db7c8a95dd3dff831b78aaa246e8e"
+proxmox_vm_cpu_cores         = 2
+proxmox_vm_memory            = 4096
+proxmox_vm_disk_size         = "40G"
+proxmox_vm_sockets           = 1
+proxmox_os                   = "win10"
+proxmox_vm_disk_format       = "qcow2"

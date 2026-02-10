@@ -5,6 +5,8 @@ if Dependencies.vmware_enabled:
     from goad.provider.vagrant.vmware import VmwareProvider
 if Dependencies.vmware_esxi_enabled:
     from goad.provider.vagrant.vmware_esxi import VmwareEsxiProvider
+if Dependencies.vmware_vcenter_enabled:
+    from goad.provider.vagrant.vmware_vcenter import VmwareVcenterProvider
 if Dependencies.virtualbox_enabled:
     from goad.provider.vagrant.virtualbox import VirtualboxProvider
 if Dependencies.azure_enabled:
@@ -15,6 +17,8 @@ if Dependencies.proxmox_enabled:
     from goad.provider.terraform.proxmox import ProxmoxProvider
 if Dependencies.ludus_enabled:
     from goad.provider.ludus.ludus import LudusProvider
+if Dependencies.aliyun_enabled:
+    from goad.provider.terraform.aliyun import AliyunProvider
 
 
 class ProviderFactory:
@@ -28,6 +32,8 @@ class ProviderFactory:
             provider = VmwareProvider(lab_name)
         elif provider_name == VMWARE_ESXI and Dependencies.vmware_esxi_enabled:
             provider = VmwareEsxiProvider(lab_name)
+        elif provider_name == VMWARE_VCENTER and Dependencies.vmware_vcenter_enabled:
+            provider = VmwareVcenterProvider(lab_name)
         elif provider_name == PROXMOX and Dependencies.proxmox_enabled:
             provider = ProxmoxProvider(lab_name, config)
         elif provider_name == AZURE and Dependencies.azure_enabled:
@@ -36,4 +42,6 @@ class ProviderFactory:
             provider = AwsProvider(lab_name, config)
         elif provider_name == LUDUS and Dependencies.ludus_enabled:
             provider = LudusProvider(lab_name, config)
+        elif provider_name == ALIYUN and Dependencies.aliyun_enabled:
+            provider = AliyunProvider(lab_name, config)
         return provider

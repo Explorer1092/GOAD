@@ -1,42 +1,42 @@
 <!--
-Sync Impact Report
-Version change: template → 1.0.0
-Modified principles: initialized (Isolation & Risk Control; Deterministic Provisioning via GOAD CLI; Provider Parity & Template Integrity; Data & Inventory Source of Truth; Documentation, Coding Discipline & Verification)
-Added sections: Operational Constraints & Stack; Development Workflow & Quality Gates; Governance (populated)
-Removed sections: None
-Templates requiring updates: .specify/templates/plan-template.md ✅; .specify/templates/spec-template.md ✅; .specify/templates/tasks-template.md ✅; command templates ⚠ (no command templates present)
-Follow-up TODOs: None
+同步影响报告
+版本变更：template → 1.0.0
+修改的原则：初始化（隔离与风险控制；通过 GOAD CLI 实现确定性部署；提供商一致性与模板完整性；数据与清单的唯一来源；文档、代码规范与验证）
+新增章节：运行约束与技术栈；开发流程与质量闸门；治理（已填充）
+移除章节：无
+需要更新的模板：.specify/templates/plan-template.md ✅；.specify/templates/spec-template.md ✅；.specify/templates/tasks-template.md ✅；命令模板 ⚠（不存在命令模板）
+后续 TODO：无
 -->
 
-# GOAD Constitution
+# GOAD 宪章
 
-## Core Principles
+## 核心原则
 
-### I. Isolation & Risk Control (Non-Negotiable)
-Lab assets are intentionally vulnerable and MUST stay isolated from the public internet or untrusted networks; default to provider private networks and avoid inbound exposure unless explicitly documented, time-bound, and approved. Credentials, keys, and configuration secrets live only in local settings (for example `~/.goad/goad.ini` and per-instance `workspace/<id>/ssh_keys`) and are never committed. Cloud usage must include scoped IP ranges and teardown steps. Rationale: prevents unintended leakage of an intentionally insecure lab and limits blast radius.
+### I. 隔离与风险控制（不可协商）
+实验室资产是有意设计为脆弱的；默认使用提供商私有网络，除非有明确文档、限定时间且获得批准，否则避免入站暴露。凭据、密钥和配置机密仅保存在本地设置（如 `~/.goad/goad.ini` 和每个实例的 `workspace/<id>/ssh_keys`）中，绝不提交。使用云时必须限定 IP 范围并规划拆除步骤。理由：防止有意脆弱的实验室意外泄漏并限制影响范围。
 
-### II. Deterministic Provisioning via GOAD CLI
-All lab lifecycle actions (install, provide, provision) run through `./goad.sh` or `python3 goad.py`; do not hand-edit generated `workspace/` artifacts beyond ephemeral debugging, and never commit them. Provider artifacts originate from `template/<provider>/` merged with `ad/<lab>/providers/<provider>/` and optional `extensions/<extension>/providers/<provider>/`; edit those sources instead of generated outputs. Run `./goad.sh -t check -l <LAB> -p <PROVIDER>` before merging changes that affect provisioning or dependencies. Rationale: keeps builds reproducible across users and providers.
+### II. 通过 GOAD CLI 实现确定性部署
+所有实验室生命周期操作（安装、提供、部署）均通过 `./goad.sh` 或 `python3 goad.py` 运行；除临时调试外，不要手动编辑生成的 `workspace/` 产物，且永不提交。提供商产物来源于 `template/<provider>/`，与 `ad/<lab>/providers/<provider>/` 及可选的 `extensions/<extension>/providers/<provider>/` 合并；修改这些源而非生成物。合并任何影响部署或依赖的更改前，运行 `./goad.sh -t check -l <LAB> -p <PROVIDER>`。理由：确保跨用户与提供商的可重现性。
 
-### III. Provider Parity & Template Integrity
-When altering provisioning logic, evaluate and document parity across supported providers (virtualbox, vmware, proxmox, azure, aws, ludus); intentional divergences must be called out in docs. Templates, packer, vagrant, and terraform assets stay minimal and override-friendly; avoid embedding provider-specific logic in shared playbooks unless guarded. Breaking provider compatibility requires migration notes and justification. Rationale: maintains consistent lab behavior regardless of provider and reduces drift.
+### III. 提供商一致性与模板完整性
+调整部署逻辑时，评估并记录所有受支持提供商（virtualbox、vmware、proxmox、azure、aws、ludus）的行为一致性；任何有意差异都必须在文档中说明。模板、packer、vagrant 与 terraform 资产保持精简且易于覆盖；除非有保护措施，避免在共享 playbook 中嵌入特定提供商逻辑。破坏提供商兼容性时必须提供迁移说明和理由。理由：无论提供商如何都保持实验室行为一致，减少漂移。
 
-### IV. Data & Inventory Source of Truth
-Lab data belongs in `ad/<lab>/data/config.json`; extension-specific data in `extensions/<extension>/data/config.json`; do not duplicate or hardcode these values in playbooks. Preserve inventory precedence: lab inventory → provider workspace inventory → extension inventories → `globalsettings.ini`; avoid modifying the base lab inventory structure. Treat `workspace/<instance>/...` as ephemeral state never committed or used as canonical data. Rationale: predictable overrides ensure deterministic provisioning and reliable debugging.
+### IV. 数据与清单的唯一来源
+实验室数据存放于 `ad/<lab>/data/config.json`，扩展数据存放于 `extensions/<extension>/data/config.json`；不要在 playbook 中复制或硬编码这些值。保持清单优先级：实验室清单 → 提供商工作区清单 → 扩展清单 → `globalsettings.ini`；避免修改基础实验室清单结构。将 `workspace/<instance>/...` 视为临时状态，既不提交也不作为权威数据。理由：可预测的覆盖顺序确保确定性部署与可靠调试。
 
-### V. Documentation, Coding Discipline & Verification
-Behavioral or interface changes MUST update `docs/mkdocs/docs/` and `README.md` with provider-specific impacts and usage notes. Follow repo style (Python 4-space indentation, snake_case; Ansible/YAML 2-space indentation) and keep secrets or generated assets out of version control (`workspace/` remains ignored). Minimal verification is required: run the relevant `./goad.sh -t check` for the affected lab/provider, plus targeted playbook or provider smoke tests when feasible, and record results. Rationale: documentation and basic validation keep a dangerous lab usable and trustworthy.
+### V. 文档、代码规范与验证
+任何行为或接口变化都必须更新 `docs/mkdocs/docs/` 与 `README.md`，说明提供商影响和使用说明。遵循仓库风格（Python 四空格缩进、snake_case；Ansible/YAML 两空格缩进），并避免将机密或生成资产提交到版本控制（`workspace/` 保持忽略）。至少需要验证：对受影响实验室/提供商运行对应的 `./goad.sh -t check`，并在可行时执行针对性的 playbook 或提供商冒烟测试并记录结果。理由：文档与基本验证确保高危实验室仍可使用且可信。
 
-## Operational Constraints & Stack
+## 运行约束与技术栈
 
-GOAD is a vulnerable Active Directory lab delivered via provider-specific virtual infrastructure. The managed entrypoints are `./goad.sh` (bootstrap plus interactive console) or `python3 goad.py` for targeted tasks; `goad_docker.sh` is available when isolating Ansible dependencies. Providers include virtualbox, vmware, proxmox, azure, aws, and ludus; proxmox and ludus require template preparation before provisioning. Instances live under `workspace/<instance_id>/` with merged provider files and inventories; these artifacts are generated and must remain uncommitted. Global overrides reside in `globalsettings.ini`, while user defaults live in `~/.goad/goad.ini`.
+GOAD 是通过特定提供商虚拟基础设施交付的脆弱 Active Directory 实验室。受管入口是 `./goad.sh`（引导并提供交互式控制台）或 `python3 goad.py`（针对性任务）；隔离 Ansible 依赖时可使用 `goad_docker.sh`。支持的提供商包括 virtualbox、vmware、proxmox、azure、aws 与 ludus；proxmox 与 ludus 在部署前需要准备模板。实例位于 `workspace/<instance_id>/`，其中包含合并后的提供商文件与清单；这些生成产物必须保持未提交。全局覆盖放在 `globalsettings.ini`，用户默认配置在 `~/.goad/goad.ini`。
 
-## Development Workflow & Quality Gates
+## 开发流程与质量闸门
 
-During design, declare the lab(s), provider(s), and extensions affected, along with any required isolation or exposure windows. Implement changes in source locations (`ad/<lab>/...`, `extensions/<extension>/...`, `template/<provider>/`, `ansible/`, `playbooks.yml`) rather than generated workspace files, and preserve playbook ordering. Before review, run `./goad.sh -t check -l <LAB> -p <PROVIDER>` for each affected provider and note any targeted playbook runs or smoke validations. Every change that alters behavior includes a documentation update and a brief verification note in the change description.
+设计阶段需要声明受影响的实验室、提供商和扩展，以及任何必要的隔离或暴露窗口。实现时在源位置（`ad/<lab>/...`、`extensions/<extension>/...`、`template/<provider>/`、`ansible/`、`playbooks.yml`）修改，而非生成的工作区文件，并保持 playbook 顺序。评审前，对每个受影响提供商运行 `./goad.sh -t check -l <LAB> -p <PROVIDER>`，并记录任何针对性 playbook 或冒烟验证。任何改变行为的修改都需要文档更新及简要验证说明。
 
-## Governance
+## 治理
 
-This constitution supersedes other practice guides for GOAD delivery. Amendments require a documented rationale, an update to this file with version bump, and any necessary migration or testing notes; semantic versioning applies (MAJOR for incompatible governance changes, MINOR for new principles or material expansions, PATCH for clarifications). `RATIFICATION_DATE` records the initial adoption; `LAST_AMENDED_DATE` updates with each change. Reviews must include a Constitution Check confirming isolation controls, reproducible provisioning via GOAD CLI, provider parity considerations, data and inventory source-of-truth usage, documentation updates, and recorded verification. Template files under `.specify/templates/` must be updated alongside governance changes to keep tooling aligned.
+本宪章优先于其他 GOAD 交付实践指南。修订需提供理由、更新本文件并提升版本，同时记录必要的迁移或测试说明；采用语义化版本（重大变更用于不兼容的治理调整，次要版本用于新增或实质扩展原则，修订版本用于澄清）。`RATIFICATION_DATE` 记录初始采纳日期，`LAST_AMENDED_DATE` 随每次变更更新。评审必须执行宪章检查，确认隔离控制、通过 GOAD CLI 的可重现部署、提供商一致性、数据与清单源的遵循、文档更新以及验证记录。`.specify/templates/` 下的模板文件需与治理变更同步更新，保持工具一致性。
 
 **Version**: 1.0.0 | **Ratified**: 2026-01-17 | **Last Amended**: 2026-01-17

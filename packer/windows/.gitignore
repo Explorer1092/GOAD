@@ -1,0 +1,10 @@
+# Packer config with credentials
+config.auto.pkrvars.hcl
+
+# Packer cache and logs
+packer_cache/
+*.log
+
+# Temporary files
+*.tmp
+*.bak

@@ -23,6 +23,13 @@
     include_management_tools: yes
   register: features
 
+- name: Install windows features - DNS Server
+  win_feature:
+    name: DNS
+    state: present
+    include_management_tools: yes
+  register: features
+
 # DNSCHANGE
 # - name: "disable interface {{nat_adapter}} before join domain"
 #   win_shell: netsh interface set interface "{{nat_adapter}}" disable

@@ -65,3 +65,70 @@ GOAD/vmware_esxi/local/192.168.56.X > install
 ```bash
 ./goad.sh -t install -p vmware_esxi -l <lab> -ip <ip_range_to_use>
 ```
+
+## Optional: OpenWrt gateway (self-built router)
+
+When enabled, GOAD VMs use a single LAN adapter and route outbound traffic via an OpenWrt VM.
+
+1) Prepare a Vagrant box for ESXi from the OpenWrt image:
+   - Image URL: https://downloads.openwrt.org/releases/24.10.5/targets/x86/64/openwrt-24.10.5-x86-64-generic-ext4-combined-efi.img.gz
+   - Convert the image to a VMDK/OVF and add it as a Vagrant box (provider: `vmware_esxi`).
+   - The OpenWrt guest must have `open-vm-tools` installed so the ESXi provider can detect its IP.
+2) Edit `~/.goad/goad.ini`:
+
+```ini
+[vmware_esxi]
+esxi_use_router = yes
+esxi_router_box = openwrt-24.10.5-x86-64-esxi
+esxi_router_box_version =
+esxi_router_ip_suffix = 1
+```
+
+3) Ensure OpenWrt LAN IP is set to `<ip_range>.1` (for example `192.168.56.1`).
+
+Notes:
+- The OpenWrt VM will have two NICs: WAN on `esxi_net_nat`, LAN on `esxi_net_domain`.
+- All GOAD VMs will have a single NIC on `esxi_net_domain` and their default gateway set to `<ip_range>.1`.
+
+### Optional: Run Vagrant from the PROVISIONING VM (no host routing)
+
+This mode runs Vagrant inside the PROVISIONING VM so WinRM stays inside the
+`<ip_range>.0/24` LAN (no host static routes needed). It is recommended when
+`esxi_use_router = yes`.
+
+1) Update `~/.goad/goad.ini`:
+
+```ini
+[vmware_esxi]
+esxi_vagrant_on_jumpbox = yes
+```
+
+2) Use the VM provisioner so the PROVISIONING VM is created:
+
+```bash
+./goad.sh -p vmware_esxi -m vm
+```
+
+3) Install the **Linux** OVF Tool inside the PROVISIONING VM (required by
+`vagrant-vmware-esxi`):
+
+```bash
+sudo sh /path/to/VMware-ovftool-*.bundle --eulas-agreed --required
+```
+
+4) Create OpenWrt DHCP reservations for all GOAD VMs (static IPs) using the
+deterministic MACs defined in the ESXi template:
+
+```bash
+python3 scripts/esxi_openwrt_dhcp_hosts.py workspace/<instance_id>/provider/Vagrantfile
+```
+
+Apply the generated `uci` commands on the OpenWrt VM, then run `install` from
+the GOAD console.
+
+Notes for jumpbox mode:
+- GOAD runs `scripts/build_openwrt_esxi_box.sh` on the PROVISIONING VM to build
+  an OpenWrt box with a first-boot `open-vm-tools` install. This avoids the
+  manual install step and prevents Vagrant from timing out.
+- The script requires `qemu-utils` and `kpartx` (installed by the jumpbox setup
+  script).
